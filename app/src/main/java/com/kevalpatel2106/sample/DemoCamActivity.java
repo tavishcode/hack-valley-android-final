@@ -20,6 +20,7 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -36,6 +37,8 @@ import com.androidhiddencamera.config.CameraResolution;
 import com.androidhiddencamera.config.CameraRotation;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.List;
 
 public class DemoCamActivity extends HiddenCameraActivity {
 
@@ -89,11 +92,41 @@ public class DemoCamActivity extends HiddenCameraActivity {
     }
 
     @Override
-    public void onImageCapture(@NonNull File imageFile) {
+    public void onImageCapture(@NonNull final File imageFile) {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.RGB_565;
         Bitmap bitmap = BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
+        /*****************/
+         final String charset = "UTF-8";
+//         File uploadFile1 = new File("e:/Test/PIC1.JPG");
+//         File uploadFile2 = new File("e:/Test/PIC2.JPG");
+         final String requestURL = "http://flask-env.rryqyssj5m.ca-central-1.elasticbeanstalk.com/emoji";
 
+         class uploadTask extends AsyncTask<Void, Void, String> {
+
+            private Exception exception;
+
+            @Override
+            protected String doInBackground(Void... voids) {
+                try {
+                    MultipartUtility multipart = new MultipartUtility(requestURL, charset);
+
+                    multipart.addFilePart("image", imageFile);
+
+                    List<String> response = multipart.finish();
+
+                    for (String line : response) {
+                        System.out.println(line);
+                    }
+                } catch (IOException ex) {
+                    System.err.println(ex);
+                }
+                return null;
+            }
+        }
+
+        new uploadTask().execute();
+         /***************/
         //Display the image to the image view
         ((ImageView) findViewById(R.id.cam_prev)).setImageBitmap(bitmap);
     }
